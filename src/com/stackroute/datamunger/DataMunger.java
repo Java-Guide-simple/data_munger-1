@@ -1,5 +1,7 @@
 package com.stackroute.datamunger;
 
+import java.util.ArrayList;
+
 /*There are total 5 DataMungertest files:
  * 
  * 1)DataMungerTestTask1.java file is for testing following 3 methods
@@ -34,8 +36,12 @@ public class DataMunger {
 	 */
 
 	public String[] getSplitStrings(String queryString) {
+		String array[] = null;
+		if (null != queryString && !queryString.isEmpty()) {
+			return queryString.toLowerCase().split(" ");
+		}
+		return array;
 
-		return null;
 	}
 
 	/*
@@ -47,8 +53,21 @@ public class DataMunger {
 	 */
 
 	public String getFileName(String queryString) {
+		String fine_Name = null;
+		if (null != queryString && !queryString.isEmpty()) {
+			String[] splitStrings = queryString.toLowerCase().split(" ");
+			if (splitStrings != null && splitStrings.length > 0) {
+				for (int i = 0; i < splitStrings.length; i++) {
+					if (splitStrings[i].equals("from")) {
+						fine_Name = splitStrings[i + 1];
+						break;
+					}
 
-		return null;
+				}
+			}
+		}
+
+		return fine_Name;
 	}
 
 	/*
@@ -60,10 +79,24 @@ public class DataMunger {
 	 * by clause 3. The query might not contain where, but can contain both group by
 	 * and order by clause
 	 */
-	
-	public String getBaseQuery(String queryString) {
 
-		return null;
+	public String getBaseQuery(String queryString) {
+		if (null != queryString && !queryString.isEmpty()) {
+			String lowerCaseString = queryString.toLowerCase();
+			int indexOf = lowerCaseString.indexOf("where");
+			if (indexOf < 0) {
+				indexOf = lowerCaseString.indexOf("group by");
+			}
+			if (indexOf < 0) {
+				indexOf = lowerCaseString.indexOf("order by");
+			}
+			if (indexOf > -1) {
+				return lowerCaseString.substring(0, indexOf - 1);
+			} else {
+				return queryString;
+			}
+		}
+		return "";
 	}
 
 	/*
@@ -72,15 +105,22 @@ public class DataMunger {
 	 * fields will be stored in a String array which is to be printed in console as
 	 * well as to be returned by the method
 	 * 
-	 * Note: 1. The field name or value in the condition can contain keywords
-	 * as a substring. For eg: from_city,job_order_no,group_no etc. 2. The field
-	 * name can contain '*'
+	 * Note: 1. The field name or value in the condition can contain keywords as a
+	 * substring. For eg: from_city,job_order_no,group_no etc. 2. The field name can
+	 * contain '*'
 	 * 
 	 */
-	
-	public String[] getFields(String queryString) {
 
-		return null;
+	public String[] getFields(String queryString) {
+		String array[] = null;
+		if (null != queryString && !queryString.isEmpty()) {
+			String lowerCaseQueryString = queryString.toLowerCase();
+			int startIndex = lowerCaseQueryString.indexOf("select");
+			int endIndex = lowerCaseQueryString.indexOf("from");
+			return lowerCaseQueryString.substring(startIndex + "select".length() + 1, endIndex - 1).split(",");
+		}
+		return array;
+
 	}
 
 	/*
@@ -88,13 +128,26 @@ public class DataMunger {
 	 * conditions part contains starting from where keyword till the next keyword,
 	 * which is either group by or order by clause. In case of absence of both group
 	 * by and order by clause, it will contain till the end of the query string.
-	 * Note:  1. The field name or value in the condition can contain keywords
-	 * as a substring. For eg: from_city,job_order_no,group_no etc. 2. The query
-	 * might not contain where clause at all.
+	 * Note: 1. The field name or value in the condition can contain keywords as a
+	 * substring. For eg: from_city,job_order_no,group_no etc. 2. The query might
+	 * not contain where clause at all.
 	 */
-	
-	public String getConditionsPartQuery(String queryString) {
 
+	public String getConditionsPartQuery(String queryString) {
+		if (null != queryString && !queryString.isEmpty()) {
+			String lowerCaseQueryString = queryString.toLowerCase();
+			int startIndex = lowerCaseQueryString.indexOf("where");
+			if (startIndex > -1) {
+				int endIndex = lowerCaseQueryString.indexOf("group");
+				if (endIndex < 0) {
+					endIndex = lowerCaseQueryString.indexOf("order");
+				}
+				if (endIndex < 0) {
+					return lowerCaseQueryString.substring(startIndex + "where ".length());
+				}
+				return lowerCaseQueryString.substring(startIndex + "where ".length(), endIndex - 1);
+			}
+		}
 		return null;
 	}
 
@@ -115,65 +168,114 @@ public class DataMunger {
 
 	public String[] getConditions(String queryString) {
 
-		return null;
+		String array[] = null;
+		String conditionsPartQuery = getConditionsPartQuery(queryString);
+		if (null != conditionsPartQuery && !conditionsPartQuery.isEmpty()) {
+			return conditionsPartQuery.toLowerCase().split(" and | or ");
+		}
+		return array;
+
 	}
 
 	/*
 	 * This method will extract logical operators(AND/OR) from the query string. The
 	 * extracted logical operators will be stored in a String array which will be
-	 * returned by the method and the same will be printed Note:  1. AND/OR
-	 * keyword will exist in the query only if where conditions exists and it
-	 * contains multiple conditions. 2. AND/OR can exist as a substring in the
-	 * conditions as well. For eg: name='Alexander',color='Red' etc. Please consider
-	 * these as well when extracting the logical operators.
+	 * returned by the method and the same will be printed Note: 1. AND/OR keyword
+	 * will exist in the query only if where conditions exists and it contains
+	 * multiple conditions. 2. AND/OR can exist as a substring in the conditions as
+	 * well. For eg: name='Alexander',color='Red' etc. Please consider these as well
+	 * when extracting the logical operators.
 	 * 
 	 */
 
 	public String[] getLogicalOperators(String queryString) {
+		String testWhere = getConditionsPartQuery(queryString);
+		ArrayList<String> arrayList = new ArrayList<String>();
+		if (testWhere != null) {
+			String[] splitStrings = getSplitStrings(queryString);
+			for (String string : splitStrings) {
+				if (string.equals("and") || string.equals("or") || string.equals("not")) {
+					arrayList.add(string);
+				}
+			}
 
-		return null;
+			return arrayList.toArray(new String[arrayList.size()]);
+		} else {
+			return null;
+		}
 	}
 
 	/*
-	 * This method extracts the order by fields from the query string. Note: 
-	 * 1. The query string can contain more than one order by fields. 2. The query
-	 * string might not contain order by clause at all. 3. The field names,condition
-	 * values might contain "order" as a substring. For eg:order_number,job_order
-	 * Consider this while extracting the order by fields
+	 * This method extracts the order by fields from the query string. Note: 1. The
+	 * query string can contain more than one order by fields. 2. The query string
+	 * might not contain order by clause at all. 3. The field names,condition values
+	 * might contain "order" as a substring. For eg:order_number,job_order Consider
+	 * this while extracting the order by fields
 	 */
 
 	public String[] getOrderByFields(String queryString) {
-
+		if (null != queryString && !queryString.isEmpty()) {
+			queryString = queryString.toLowerCase();
+			int startIndex = queryString.indexOf("order by");
+			if (startIndex > -1) {
+				return queryString.substring(startIndex + "order by ".length()).split(" ");
+			}
+		}
 		return null;
+
 	}
 
 	/*
-	 * This method extracts the group by fields from the query string. Note:
-	 * 1. The query string can contain more than one group by fields. 2. The query
-	 * string might not contain group by clause at all. 3. The field names,condition
-	 * values might contain "group" as a substring. For eg: newsgroup_name
+	 * This method extracts the group by fields from the query string. Note: 1. The
+	 * query string can contain more than one group by fields. 2. The query string
+	 * might not contain group by clause at all. 3. The field names,condition values
+	 * might contain "group" as a substring. For eg: newsgroup_name
 	 * 
 	 * Consider this while extracting the group by fields
 	 */
 
 	public String[] getGroupByFields(String queryString) {
+		String array[] = null;
+		if (null != queryString && !queryString.isEmpty()) {
+			queryString = queryString.toLowerCase();
+			int startIndex = queryString.indexOf("group by");
+			if (startIndex > -1) {
+				int endIndex = queryString.indexOf("order");
+				if (endIndex < 0) {
+					return queryString.substring(startIndex + "groub by ".length()).split(",");
+				}
+				return queryString.substring(startIndex + "where ".length(), endIndex - 1).split(",");
+			}
+		}
+		return array;
 
-		return null;
 	}
 
 	/*
-	 * This method extracts the aggregate functions from the query string. Note:
-	 *  1. aggregate functions will start with "sum"/"count"/"min"/"max"/"avg"
-	 * followed by "(" 2. The field names might
-	 * contain"sum"/"count"/"min"/"max"/"avg" as a substring. For eg:
-	 * account_number,consumed_qty,nominee_name
+	 * This method extracts the aggregate functions from the query string. Note: 1.
+	 * aggregate functions will start with "sum"/"count"/"min"/"max"/"avg" followed
+	 * by "(" 2. The field names might contain"sum"/"count"/"min"/"max"/"avg" as a
+	 * substring. For eg: account_number,consumed_qty,nominee_name
 	 * 
 	 * Consider this while extracting the aggregate functions
 	 */
 
 	public String[] getAggregateFunctions(String queryString) {
+		String array[] = null;
+		String[] fields = getFields(queryString);
+		if (null != fields && fields.length > 0) {
+			StringBuilder builder = new StringBuilder();
+			for (String field : fields) {
+				if (field.indexOf("(") > -1) {
+					builder.append(field).append("=");
+				}
+			}
+			return (builder.length() > 0 ? builder.toString().split("=") : null);
+		}
+		return array;
 
-		return null;
 	}
+	
+	
 
 }
